@@ -246,6 +246,18 @@ class DataPrepper:
         feature_results["query_id"] = []  # ^^^
         feature_results["sku"] = []
         feature_results["name_match"] = []
+        feature_defaults = {
+            "name_phrase_match": 0,
+            "artistName_phrase_match": 0,
+            "shortDescription_match": 0,
+            "longDescription_match": 0,
+            "customerReviewAverage": 0,
+            "customerReviewCount": 0
+        }
+
+        for feature in feature_defaults:
+            feature_results[feature] = []
+
         rng = np.random.default_rng(12345)
 
         if search_response and len(search_response['hits']) > 0:
