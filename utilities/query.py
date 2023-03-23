@@ -49,7 +49,11 @@ def create_prior_queries(doc_ids, doc_id_weights,
 
 
 # Hardcoded query here.  Better to use search templates or other query config.
-def create_query(user_query, click_prior_query, filters, sort="_score", sortDir="desc", size=10, source=None):
+def create_query(user_query, click_prior_query, filters, sort="_score", sortDir="desc", size=10, source=None, use_synonyms=False):
+    if use_synonyms:
+        name_field = "name.synonyms"
+    else:
+        name_field = "name"
     query_obj = {
         'size': size,
         "sort": [
@@ -65,7 +69,7 @@ def create_query(user_query, click_prior_query, filters, sort="_score", sortDir=
                         "should": [  #
                             {
                                 "match": {
-                                    "name": {
+                                    name_field: {
                                         "query": user_query,
                                         "fuzziness": "1",
                                         "prefix_length": 2,
@@ -186,7 +190,7 @@ def create_query(user_query, click_prior_query, filters, sort="_score", sortDir=
     return query_obj
 
 
-def search(client, user_query, index="bbuy_products", sort="_score", sortDir="desc"):
+def search(client, user_query, index="bbuy_products", sort="_score", sortDir="desc", use_synonyms=use_synonyms):
     #### W3: classify the query
     #### W3: create filters and boosts
     # Note: you may also want to modify the `create_query` method above
@@ -212,7 +216,8 @@ if __name__ == "__main__":
                          help='The OpenSearch port')
     general.add_argument('--user',
                          help='The OpenSearch admin.  If this is set, the program will prompt for password too. If not set, use default of admin/admin')
-
+    general.add_argument('--synonyms', action='store_true',
+                         help='Use synoymns in your query')
     args = parser.parse_args()
 
     if len(vars(args)) == 0:
@@ -246,7 +251,11 @@ if __name__ == "__main__":
         if query == "Exit":
             break
         search(client=opensearch, user_query=query, index=index_name)
-
-        print(query_prompt)
+    
+        #print(query_prompt)
+    query_prompt = "\nEnter your query (type 'Exit' to exit or hit ctrl-c):\n"
+    while (line := input(query_prompt)) != "Exit":
+        query = line.rstrip()
+        search(client=opensearch, user_query=query, index=index_name, use_synonyms=use_synonyms)
 
     

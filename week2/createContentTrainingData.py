@@ -63,7 +63,19 @@ if __name__ == '__main__':
     print("Writing results to %s" % output_file)
     with multiprocessing.Pool() as p:
         all_labels = tqdm(p.imap(_label_filename, files), total=len(files))
+        category = []
+        product = []
+        for label_list in all_labels:
+            for (cat, name) in label_list:
+                category.append(cat)
+                product.append(name)
+
+        df = pd.DataFrame({"category": category, "product": product})
+        pruned_labels = df.groupby('category').filter(lambda x: x.nunique()['product'] >= min_products)
+
         with open(output_file, 'w') as output:
-            for label_list in all_labels:
-                for (cat, name) in label_list:
-                    output.write(f'__label__{cat} {name}\n')
+            for (cat, name) in pruned_labels.values:
+                output.write(f'__label__{cat} {name}\n')
+            # for label_list in all_labels:
+            #     for (cat, name) in label_list:
+            #         output.write(f'__label__{cat} {name}\n')
